@@ -27,7 +27,7 @@ class State(sponge.State):
         if len(value) < 16:
             value = value + b'\x00' * (16 - len(value))
         for i in range(16):
-            self.data[i] = int.from_bytes(value[i:i + 1], byteorder='little')
+            self.data[i] ^= int.from_bytes(value[i:i + 1], byteorder='little')
 
     def to_bytes(self):
         return b''.join([v.to_bytes(1, byteorder='little') for v in self.data])
