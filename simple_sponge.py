@@ -12,6 +12,7 @@ from crypto import aes
 from crypto import padding
 from crypto import sponge
 from crypto import sponge_crypto
+from crypto import utils
 
 
 class State(sponge.State):
@@ -67,14 +68,27 @@ ROUND_KEYS = [
 
 
 def substitute(v):
+    '''Apply AES S-box to value.'''
     return aes.AES_S_BOX[v]
 
 
-def permute(values):
+def xor(values):
+    '''Return XOR of all values.'''
+    result = values[0]
+    for v in values[1:]:
+        result ^= v
+    return result
+
+
+def permute(state):
+    '''Permute state.'''
     # Einfach nur eine Drehung bewirkt zu wenig: keine Diffusion!
-    v1 = values[1:] + values[:1]
-    v2 = values[7:] + values[:7]
-    return [a ^ b for a, b in zip(v1, v2)]
+    return [xor(values) for values in zip(
+        utils.rotate_value_list(state, 31),
+        utils.rotate_value_list(state, 56),
+        utils.rotate_value_list(state, 111),
+        utils.rotate_value_list(state, 1),
+    )]
 
 
 class F(sponge.F):
