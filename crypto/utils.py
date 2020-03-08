@@ -19,6 +19,39 @@ import os
 
 
 # ###################################################################
+# ## Random numbers
+
+def get_random_n_bit_number(number_of_bits):
+    """Return random number of at most number_of_bits bits."""
+    if number_of_bits <= 0:
+        return 0
+    number_of_bytes = (number_of_bits + 7) // 8
+    random_bytes = os.urandom(number_of_bytes)
+    num = int.from_bytes(random_bytes, byteorder='big')
+    if number_of_bytes * 8 > number_of_bits:
+        num >>= number_of_bytes * 8 - number_of_bits
+    return num
+
+def get_random_exact_n_bit_number(number_of_bits):
+    """Return random number of exactly number_of_bits bits."""
+    assert number_of_bits > 0
+    num = get_random_n_bit_number(number_of_bits - 1)
+    return num | (1 << (number_of_bits - 1))
+
+def get_random_number(max_value):
+    """Return random number x with 0 <= x < max_value."""
+    assert max_value > 0
+    max_bits = max_value.bit_length()
+    while True:
+        num = get_random_n_bit_number(max_bits)
+        # Instead of reducing the resulting number modulo max_value
+        # or similar tricks, we get a new number if it is too large
+        # to avoid a slight bias in the generated numbers.
+        if num < max_value:
+            return num
+
+
+# ###################################################################
 # ## Bitwise rotations
 
 def ROL(value, offset, bitsize):
@@ -115,17 +148,8 @@ def find_prime(number_of_bits):
     """Find a random prime number p with
        p.bit_length() == number_of_bits."""
     while True:
-        # Create a random number of number_of_bits bits
-        number_of_bytes = (number_of_bits + 7) // 8
-        random_bytes = os.urandom(number_of_bytes)
-        num = int.from_bytes(random_bytes, byteorder='big')
-        # Make sure that num satisfies
-        # num.bit_length() == number_of_bits
-        b = num.bit_length()
-        if b > number_of_bits:
-            num >>= b - number_of_bits
-        elif b < number_of_bits:
-            num |= 1 << (number_of_bits - 1)
+        # Create a random number of exactly number_of_bits bits
+        num = get_random_exact_n_bit_number(number_of_bits)
         # Make sure the number is odd
         num |= 1
         # Check for probable primes
