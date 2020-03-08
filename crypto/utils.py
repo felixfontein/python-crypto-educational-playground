@@ -70,6 +70,28 @@ def ROR(value, offset, bitsize):
     return result | (value >> offset)
 
 
+def rotate_value_list(values, rotate_by, bits_per_value=8):
+    """Rotate list of values by a number of bits.
+
+    Assumes that every entry in ``values`` uses at most
+    ``bits_per_value`` bits. The rotation is a left rotation
+    assuming little endian bit and byte layout.
+
+    Returns a new list of resulting values.
+    """
+    rotate_by_bits = rotate_by % bits_per_value
+    if rotate_by_bits:
+        values = [
+            (v1 >> rotate_by_bits) |
+            ((v2 << (bits_per_value - rotate_by_bits)) & 0xFF)
+            for v1, v2 in zip(values, values[1:] + values[:1])
+        ]
+    rotate_by_bytes = (rotate_by // bits_per_value) % len(values)
+    if rotate_by_bytes:
+        values = values[rotate_by_bytes:] + values[:rotate_by_bytes]
+    return values
+
+
 # ###################################################################
 # ## Basic number-theoretic functions
 
